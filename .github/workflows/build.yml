@@ -15,16 +15,38 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install Theos (installer + submodules incl. Orion)
+      - name: Install Xcode CLT & switch to full Xcode
         run: |
+          set -e
+          # macos-latest 自带 CLT；Theos 编译需要完整 Xcode（取系统 SDK + 完整 clang toolchain）
+          if [ -d /Applications/Xcode.app/Contents/Developer ]; then
+            sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+            xcodebuild -version
+          fi
+
+      - name: Install Theos (no SDK download, use system Xcode SDK)
+        run: |
+          set -e
           export REPO="$HOME/theos"
           git clone --recursive https://github.com/theos/theos.git "$REPO"
-          (cd "$REPO" && bin/install-theos)
+          cd "$REPO"
+          # 预置 sdks/ 标记，让 install-theos 的 SDK 检查直接跳过
+          # （不下载 patched SDK，改用系统 Xcode 自带 SDK）
+          mkdir -p sdks
+          touch sdks/.placeholder
+          bash bin/install-theos
+          echo "THEOS=$REPO" >> $GITHUB_ENV
 
-      - name: Build & package
+      - name: Pre-cache SPM dependencies (Orion Runtime + other deps)
         run: |
+          set -e
           export THEOS="$HOME/theos"
-          make spm || true
+          make spm
+
+      - name: Build & package (rootless)
+        run: |
+          set -e
+          export THEOS="$HOME/theos"
           make package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless
 
       - name: Collect debs
