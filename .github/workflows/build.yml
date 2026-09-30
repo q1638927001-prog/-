@@ -15,38 +15,51 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install Xcode CLT & switch to full Xcode
+      - name: Switch to full Xcode & accept licenses
         run: |
           set -e
-          # macos-latest 自带 CLT；Theos 编译需要完整 Xcode（取系统 SDK + 完整 clang toolchain）
           if [ -d /Applications/Xcode.app/Contents/Developer ]; then
             sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
-            xcodebuild -version
           fi
+          sudo xcodebuild -license accept || true
+          xcodebuild -version
 
-      - name: Install Theos (no SDK download, use system Xcode SDK)
+      - name: Clone Theos (skip installer, we manage SDK ourselves)
         run: |
           set -e
           export REPO="$HOME/theos"
           git clone --recursive https://github.com/theos/theos.git "$REPO"
           cd "$REPO"
-          # 预置 sdks/ 标记，让 install-theos 的 SDK 检查直接跳过
-          # （不下载 patched SDK，改用系统 Xcode 自带 SDK）
-          mkdir -p sdks
-          touch sdks/.placeholder
-          bash bin/install-theos
+          # 初始化 submodule（含 theos 内部依赖）
+          git submodule update --init --recursive
+          # 跳过 install-theos 整体（它会卡 SDK 下载）；直接手动初始化
+          export THEOS="$REPO"
           echo "THEOS=$REPO" >> $GITHUB_ENV
 
-      - name: Pre-cache SPM dependencies (Orion Runtime + other deps)
+      - name: Install patched SDK (with retries)
         run: |
           set -e
           export THEOS="$HOME/theos"
-          make spm
+          for i in 1 2 3 4 5; do
+            echo "=== SDK install attempt $i ==="
+            if "$THEOS/bin/install-sdk" latest; then
+              echo "SDK installed on attempt $i"
+              exit 0
+            fi
+            echo "attempt $i failed, waiting 30s..."
+            sleep 30
+          done
+          echo "All SDK install attempts failed"
+          ls -la "$THEOS/sdks/" 2>/dev/null || true
+          exit 1
 
       - name: Build & package (rootless)
         run: |
           set -e
           export THEOS="$HOME/theos"
+          # 手动初始化 Theos（install-theos 没跑，部分环境变量需补齐）
+          # Theos 的 build 逻辑本身不依赖 install-theos 完成，SDK 装好即可
+          make spm || true
           make package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless
 
       - name: Collect debs
