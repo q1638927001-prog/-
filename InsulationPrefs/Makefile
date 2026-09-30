@@ -8,5 +8,6 @@ InsulationPrefs_FILES = $(shell find Sources/InsulationPrefs -name '*.swift') $(
 InsulationPrefs_SWIFTFLAGS = -ISources/InsulationPrefsC/include
 InsulationPrefs_INSTALL_PATH = /Library/PreferenceBundles
 InsulationPrefs_CFLAGS = -fobjc-arc
+InsulationPrefs_PRIVATE_FRAMEWORKS = Preferences
 
 include $(THEOS_MAKE_PATH)/bundle.mk
