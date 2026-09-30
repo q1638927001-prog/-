@@ -21,14 +21,16 @@ class IPowerHepler {
   // 获取本地配置文件内容
   func getLocalPrefValue() {
     let plistValue = IFileManager.getPlistContent(
-      withPath: insulationC.rootlessPath("/var/mobile/Library/Preferences/com.be-huge.insulation-prefs.plist")
+      withPath: "/var/mobile/Library/Preferences/com.be-huge.insulation-prefs.plist"
     );
     self.plistObj = plistValue;
   }
 
   // 模拟电池温度控制cpu频率
   func executePuppetEvent() {
-    self.getLocalPrefValue();
+    if self.plistObj.isEmpty {
+      self.getLocalPrefValue();
+    }
     let eventType = (self.plistObj["thermalPuppetValue"] as? String) ?? "";
     if let direction = ThermalLevelEnum(rawValue: eventType) {
       direction.next();
