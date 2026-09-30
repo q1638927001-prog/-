@@ -15,24 +15,16 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install Theos
+      - name: Install Theos (installer + submodules incl. Orion)
         run: |
           export REPO="$HOME/theos"
-          git clone --depth=1 https://github.com/theos/theos.git "$REPO"
-          git clone --depth=1 https://github.com/theos/logos.git "$REPO/vendor/logos"
-          (cd "$REPO" && ./theos)
-
-      - name: Install Orion into Theos vendor
-        run: |
-          export THEOS="$HOME/theos"
-          git clone --depth=1 https://github.com/theos/orion.git "$HOME/orion"
-          (cd "$HOME/orion" && make vendor)
+          git clone --recursive https://github.com/theos/theos.git "$REPO"
+          (cd "$REPO" && bin/install-theos)
 
       - name: Build & package
         run: |
           export THEOS="$HOME/theos"
-          [ -f "$HOME/.zshrc" ] && source "$HOME/.zshrc" || true
-          make spm
+          make spm || true
           make package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless
 
       - name: Collect debs
