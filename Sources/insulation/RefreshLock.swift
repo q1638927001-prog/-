@@ -9,7 +9,6 @@ import QuartzCore
 // 开关开启时，任何进程（backboardd / SpringBoard / 各 app）想把 min 压低于 120，
 // 都被我们强行改回 120，面板刷新率因此保持 120Hz。
 //
-// 同时覆盖 iOS15+ 的 preferredFrameRateRange 新 API。
 // 非 ProMotion 机型（最大 60Hz）下强制 120 无效也不会崩溃（上限于面板能力）。
 
 class CADisplayLinkRefreshHook: ClassHook<CADisplayLink> {
@@ -29,17 +28,6 @@ class CADisplayLinkRefreshHook: ClassHook<CADisplayLink> {
       orig.setMaximumFrameRate(120.0);
     } else {
       orig.setMaximumFrameRate(rate);
-    }
-  }
-
-  // iOS15+ 新 API：preferredFrameRateRange
-  func setPreferredFrameRateRange(_ range: CADisplayPreferredFrameRateRange) {
-    if RefreshLock.shared.isEnabled {
-      orig.setPreferredFrameRateRange(
-        CADisplayPreferredFrameRateRange(minimum: 120, maximum: 120)
-      );
-    } else {
-      orig.setPreferredFrameRateRange(range);
     }
   }
 }
