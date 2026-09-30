@@ -50,10 +50,9 @@ jobs:
         run: |
           set -e
           export THEOS="$HOME/theos"
-          # 保证 DEBIAN 脚本有执行权限（仓库里可能丢了 755）
           find layout -path "*/DEBIAN/*" -type f -exec chmod 755 {} \; 2>/dev/null || true
           make spm || true
-          make package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless TARGET_CODESIGN=
+          make package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless TARGET_CODESIGN=codesign TARGET_CODESIGN_FLAGS="--sign -"
 
       - name: Collect debs
         run: |
