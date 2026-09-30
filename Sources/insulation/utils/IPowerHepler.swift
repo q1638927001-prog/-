@@ -28,9 +28,7 @@ class IPowerHepler {
 
   // 模拟电池温度控制cpu频率
   func executePuppetEvent() {
-    if self.plistObj.isEmpty {
-      self.getLocalPrefValue();
-    }
+    self.getLocalPrefValue();
     let eventType = (self.plistObj["thermalPuppetValue"] as? String) ?? "";
     if let direction = ThermalLevelEnum(rawValue: eventType) {
       direction.next();
