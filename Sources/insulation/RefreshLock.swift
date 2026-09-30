@@ -55,7 +55,7 @@ class RefreshLock {
   /// 从设置 plist 重新读取 lock120hz
   func reload() {
     let prefs = IFileManager.getPlistContent(
-      withPath: insulationC.rootlessPath("/var/mobile/Library/Preferences/com.be-huge.insulation-prefs.plist")
+      withPath: "/var/mobile/Library/Preferences/com.be-huge.insulation-prefs.plist"
     );
     self.isEnabled = (prefs["lock120hz"] as? Bool) ?? false;
   }
