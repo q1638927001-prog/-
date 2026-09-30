@@ -19,7 +19,7 @@ jobs:
         run: |
           export REPO="$HOME/theos"
           git clone --recursive https://github.com/theos/theos.git "$REPO"
-          (cd "$REPO" && bin/install-theos)
+          (cd "$REPO" && bash bin/install-theos)
 
       - name: Build & package
         run: |
