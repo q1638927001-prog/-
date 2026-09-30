@@ -50,9 +50,8 @@ jobs:
         run: |
           set -e
           export THEOS="$HOME/theos"
-          export DISABLE_CODE_SIGNING=1
           make spm || true
-          make package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless DISABLE_CODE_SIGNING=1
+          make package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless TARGET_CODESIGN=
 
       - name: Collect debs
         run: |
