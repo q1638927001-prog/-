@@ -24,43 +24,35 @@ jobs:
           sudo xcodebuild -license accept || true
           xcodebuild -version
 
-      - name: Clone Theos (skip installer, we manage SDK ourselves)
+      - name: Clone Theos
         run: |
           set -e
           export REPO="$HOME/theos"
           git clone --recursive https://github.com/theos/theos.git "$REPO"
           cd "$REPO"
-          # 初始化 submodule（含 theos 内部依赖）
           git submodule update --init --recursive
-          # 跳过 install-theos 整体（它会卡 SDK 下载）；直接手动初始化
-          export THEOS="$REPO"
           echo "THEOS=$REPO" >> $GITHUB_ENV
 
-      - name: Install patched SDK (with retries)
+      - name: Install patched SDK
         run: |
           set -e
           export THEOS="$HOME/theos"
           for i in 1 2 3 4 5; do
-            echo "=== SDK install attempt $i ==="
+            echo "=== SDK attempt $i ==="
             if "$THEOS/bin/install-sdk" latest; then
-              echo "SDK installed on attempt $i"
-              exit 0
+              echo "SDK OK on attempt $i"; exit 0
             fi
-            echo "attempt $i failed, waiting 30s..."
-            sleep 30
+            echo "failed, wait 30s"; sleep 30
           done
-          echo "All SDK install attempts failed"
-          ls -la "$THEOS/sdks/" 2>/dev/null || true
           exit 1
 
-      - name: Build & package (rootless)
+      - name: Build & package
         run: |
           set -e
           export THEOS="$HOME/theos"
-          # 手动初始化 Theos（install-theos 没跑，部分环境变量需补齐）
-          # Theos 的 build 逻辑本身不依赖 install-theos 完成，SDK 装好即可
+          export DISABLE_CODE_SIGNING=1
           make spm || true
-          make package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless
+          make package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless DISABLE_CODE_SIGNING=1
 
       - name: Collect debs
         run: |
