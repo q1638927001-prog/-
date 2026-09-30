@@ -1,0 +1,48 @@
+name: Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+
+jobs:
+  build-rootless:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Theos
+        run: |
+          export REPO="$HOME/theos"
+          git clone --depth=1 https://github.com/theos/theos.git "$REPO"
+          git clone --depth=1 https://github.com/theos/logos.git "$REPO/vendor/logos"
+          (cd "$REPO" && ./theos)
+
+      - name: Install Orion into Theos vendor
+        run: |
+          export THEOS="$HOME/theos"
+          git clone --depth=1 https://github.com/theos/orion.git "$HOME/orion"
+          (cd "$HOME/orion" && make vendor)
+
+      - name: Build & package
+        run: |
+          export THEOS="$HOME/theos"
+          [ -f "$HOME/.zshrc" ] && source "$HOME/.zshrc" || true
+          make spm
+          make package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless
+
+      - name: Collect debs
+        run: |
+          mkdir -p dist
+          find . -name '*.deb' -not -path './.theos/*' -not -path './dist/*' -exec cp -f {} dist/ \;
+          ls -la dist/
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wenkong120hz-rootless
+          path: dist/
